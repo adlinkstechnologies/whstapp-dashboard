@@ -1,1059 +1,1391 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Broadcast Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Broadcast Dashboard</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- SheetJS: Excel and CSV reader -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <style>
-    body {
-      background: #f4f6fa;
-      font-family: Arial, sans-serif;
-      color: #263248;
-    }
-
-    .dashboard-header {
-      background: #172554;
-      color: white;
-      padding: 25px 0;
-    }
-
-    .dashboard-header h2 {
-      font-weight: 700;
-    }
-
-    .upload-box {
-      background: white;
-      border: 2px dashed #94a3b8;
-      border-radius: 12px;
-      padding: 28px;
-      text-align: center;
-      cursor: pointer;
-      transition: .2s;
-    }
-
-    .upload-box:hover {
-      border-color: #2563eb;
-      background: #f8fbff;
-    }
-
-    .stat-card {
-      background: white;
-      border: none;
-      border-radius: 12px;
-      padding: 20px;
-      height: 100%;
-      box-shadow: 0 2px 10px rgba(0,0,0,.04);
-    }
-
-    .stat-card h6 {
-      color: #64748b;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-
-    .stat-card h3 {
-      font-size: 27px;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .stat-icon {
-      font-size: 24px;
-    }
-
-    .content-card {
-      background: white;
-      border-radius: 12px;
-      padding: 22px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.04);
-      height: 100%;
-    }
-
-    .content-card h5 {
-      font-weight: 700;
-      margin-bottom: 18px;
-    }
-
-    .table thead th {
-      background: #f1f5f9;
-      color: #475569;
-      font-size: 12px;
-      white-space: nowrap;
-      padding: 13px;
-    }
-
-    .table tbody td {
-      font-size: 13px;
-      padding: 13px;
-      vertical-align: middle;
-    }
-
-    .status-badge {
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .accepted {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .failed {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .unknown {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .muted-text {
-      color: #64748b;
-      font-size: 12px;
-    }
-
-    .section-title {
-      font-weight: 700;
-      margin-bottom: 18px;
-    }
-
-    #dashboard {
-      display: none;
-    }
-
-    .btn-primary {
-      background: #2563eb;
-      border-color: #2563eb;
-    }
-
-    .chart-container {
-      position: relative;
-      height: 270px;
-    }
-
-    .empty-message {
-      color: #64748b;
-      text-align: center;
-      padding: 35px 10px;
-    }
-
-    @media(max-width: 768px) {
-      .dashboard-header h2 {
-        font-size: 22px;
-      }
-      .stat-card h3 {
-        font-size: 22px;
-      }
-    }
-  </style>
+<style>
+body {
+    background: #f4f6fa;
+    font-family: Arial, sans-serif;
+    color: #263248;
+}
+.dashboard-header {
+    background: #172554;
+    color: white;
+    padding: 25px 0;
+}
+.dashboard-header h2 { font-weight: 700; }
+.upload-box {
+    background: white;
+    border: 2px dashed #94a3b8;
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+}
+.upload-box:hover {
+    border-color: #2563eb;
+    background: #f8fbff;
+}
+.stat-card, .content-card {
+    background: white;
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    height: 100%;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.stat-card h6 {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.stat-card h3 {
+    font-size: 27px;
+    font-weight: 700;
+    margin: 0;
+}
+.content-card h5 {
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.stat-icon { font-size: 24px; }
+.section-title {
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+.muted-text {
+    color: #64748b;
+    font-size: 12px;
+}
+.table thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    white-space: nowrap;
+    padding: 13px;
+}
+.table tbody td {
+    font-size: 13px;
+    padding: 13px;
+    vertical-align: middle;
+}
+.status-badge {
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.accepted { background:#dcfce7; color:#166534; }
+.failed { background:#fee2e2; color:#991b1b; }
+.delivered { background:#dbeafe; color:#1d4ed8; }
+.read { background:#ede9fe; color:#6d28d9; }
+.pending { background:#fef3c7; color:#92400e; }
+.unknown { background:#e2e8f0; color:#475569; }
+.chart-container {
+    position: relative;
+    height: 270px;
+}
+#dashboard { display:none; }
+.empty-message {
+    color:#64748b;
+    text-align:center;
+    padding:35px 10px !important;
+}
+.btn-primary {
+    background:#2563eb;
+    border-color:#2563eb;
+}
+.table-responsive { max-height: 520px; }
+pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+@media(max-width:768px) {
+    .dashboard-header h2 { font-size:22px; }
+    .stat-card h3 { font-size:22px; }
+}
+</style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header class="dashboard-header">
-  <div class="container">
+<div class="container">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <div>
-        <h2 class="mb-1">WhatsApp Broadcast Dashboard</h2>
-        <p class="mb-0 text-white-50">API history, recipient report and broadcast analytics</p>
-      </div>
-      <div>
+        <div>
+            <h2 class="mb-1">WhatsApp Broadcast Dashboard</h2>
+            <p class="mb-0 text-white-50">API history, recipient report and broadcast analytics</p>
+        </div>
         <span class="badge bg-light text-dark p-2">Marketing API Report</span>
-      </div>
     </div>
-  </div>
+</div>
 </header>
 
 <main class="container py-4">
 
-  <!-- UPLOAD SECTION -->
-  <section class="mb-4">
-    <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
-      <div class="stat-icon mb-2">📁</div>
-      <h5 class="fw-bold">Upload Broadcast History</h5>
-      <p class="text-secondary mb-2">Upload your WhatsApp API history in CSV, XLS or XLSX format</p>
-      <button type="button" class="btn btn-primary px-4">Choose File</button>
-      <p class="muted-text mt-3 mb-0">Expected columns: Application, Status, Call, Request Url, Response Code, Request, Response, Time</p>
-      <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" hidden>
+<!-- UPLOAD -->
+<section class="mb-4">
+    <div class="upload-box" id="uploadBox">
+        <div class="stat-icon mb-2">📁</div>
+        <h5 class="fw-bold">Upload Broadcast History</h5>
+        <p class="text-secondary mb-2">
+            Upload CSV, XLS or XLSX API history or delivery webhook report
+        </p>
+        <button type="button" class="btn btn-primary px-4"
+                onclick="document.getElementById('fileInput').click()">
+            Choose File
+        </button>
+        <p class="muted-text mt-3 mb-0">
+            API columns: Application, Status, Call, Request Url,
+            Response Code, Request, Response, Time
+        </p>
+        <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" hidden>
     </div>
 
     <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-2">
-      <div id="fileName" class="muted-text">No file uploaded yet.</div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-success btn-sm" onclick="downloadExcel()" id="excelBtn" disabled>
-          Download Excel
-        </button>
-        <button class="btn btn-outline-primary btn-sm" onclick="downloadCSV()" id="csvBtn" disabled>
-          Download CSV
-        </button>
-      </div>
-    </div>
-
-    <div id="message" class="mt-3"></div>
-  </section>
-
-  <!-- DASHBOARD -->
-  <div id="dashboard">
-
-    <!-- KPI CARDS -->
-    <h5 class="section-title">Broadcast Overview</h5>
-
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <div class="d-flex justify-content-between">
-            <h6>Total API Requests</h6>
-            <span class="stat-icon">📨</span>
-          </div>
-          <h3 id="totalRequests">0</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <div class="d-flex justify-content-between">
-            <h6>Accepted by API</h6>
-            <span class="stat-icon">✅</span>
-          </div>
-          <h3 id="acceptedCount">0</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <div class="d-flex justify-content-between">
-            <h6>API Failed</h6>
-            <span class="stat-icon">❌</span>
-          </div>
-          <h3 id="failedCount">0</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <div class="d-flex justify-content-between">
-            <h6>Unique Recipients</h6>
-            <span class="stat-icon">👥</span>
-          </div>
-          <h3 id="uniqueRecipients">0</h3>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECONDARY KPIS -->
-    <div class="row g-3 mb-4">
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <h6>HTTP 200 Responses</h6>
-          <h3 id="http200">0</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <h6>Templates Used</h6>
-          <h3 id="templateCount">0</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <h6>Success Rate</h6>
-          <h3 id="successRate">0%</h3>
-        </div>
-      </div>
-
-      <div class="col-6 col-lg-3">
-        <div class="stat-card">
-          <h6>Failed Rate</h6>
-          <h3 id="failedRate">0%</h3>
-        </div>
-      </div>
-    </div>
-
-    <!-- CHARTS -->
-    <h5 class="section-title">Broadcast Analytics</h5>
-
-    <div class="row g-3 mb-4">
-      <div class="col-lg-6">
-        <div class="content-card">
-          <h5>API Request Status</h5>
-          <div class="chart-container">
-            <canvas id="statusChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="content-card">
-          <h5>HTTP Response Codes</h5>
-          <div class="chart-container">
-            <canvas id="responseChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="content-card">
-          <h5>Template Usage</h5>
-          <div class="chart-container">
-            <canvas id="templateChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="content-card">
-          <h5>API Requests by Date</h5>
-          <div class="chart-container">
-            <canvas id="dateChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RECIPIENT REPORT -->
-    <div class="content-card mb-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-        <div>
-          <h5 class="mb-1">Recipient-Level Report</h5>
-          <p class="muted-text mb-0">One row for each complete WhatsApp API request</p>
-        </div>
-
+        <div id="fileName" class="muted-text">No file uploaded yet.</div>
         <div class="d-flex flex-wrap gap-2">
-          <input type="text" class="form-control form-control-sm" id="searchInput"
-                 placeholder="Search name, phone or template..." style="min-width:220px">
-          <select id="statusFilter" class="form-select form-select-sm" style="width:150px">
-            <option value="all">All statuses</option>
-            <option value="accepted">Accepted by API</option>
-            <option value="failed">API Failed</option>
-            <option value="unknown">Unknown</option>
-          </select>
+            <button class="btn btn-success btn-sm" onclick="downloadExcel()" id="excelBtn" disabled>
+                Download Complete Excel Report
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="downloadCSV()" id="csvBtn" disabled>
+                Download CSV
+            </button>
         </div>
-      </div>
+    </div>
+    <div id="message" class="mt-3"></div>
+</section>
 
-      <div class="table-responsive">
+<div id="dashboard">
+
+<!-- OVERVIEW -->
+<h5 class="section-title">Broadcast Overview</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between">
+                <h6>Total API Requests</h6><span>📨</span>
+            </div>
+            <h3 id="totalRequests">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between">
+                <h6>Accepted by API</h6><span>✅</span>
+            </div>
+            <h3 id="acceptedCount">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between">
+                <h6>Delivered Messages</h6><span>📩</span>
+            </div>
+            <h3 id="deliveredCount">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between">
+                <h6>Failed Messages</h6><span>❌</span>
+            </div>
+            <h3 id="failedCount">0</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <h6>Read Messages</h6>
+            <h3 id="readCount">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <h6>Unique Recipients</h6>
+            <h3 id="uniqueRecipients">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <h6>Unique Templates</h6>
+            <h3 id="templateCount">0</h3>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <h6>API Success Rate</h6>
+            <h3 id="successRate">0%</h3>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATE ANALYTICS -->
+<h5 class="section-title">Template-wise Performance</h5>
+
+<div class="content-card mb-4">
+    <p class="muted-text">
+        Each template is calculated separately using its own API requests and
+        corresponding delivery status records.
+    </p>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Template Name</th>
+                    <th>Total Requests</th>
+                    <th>API Accepted</th>
+                    <th>Delivered</th>
+                    <th>Read</th>
+                    <th>Failed</th>
+                    <th>Pending / Unknown</th>
+                    <th>API Success %</th>
+                </tr>
+            </thead>
+            <tbody id="templateTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<h5 class="section-title">Broadcast Analytics</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5>Message Delivery Status</h5>
+            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5>API Response Codes</h5>
+            <div class="chart-container"><canvas id="responseChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5>Template Usage</h5>
+            <div class="chart-container"><canvas id="templateChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-card">
+            <h5>API Requests by Date</h5>
+            <div class="chart-container"><canvas id="dateChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- RECIPIENT REPORT -->
+<div class="content-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+            <h5 class="mb-1">Recipient-Level Report</h5>
+            <p class="muted-text mb-0">One row per API message request</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <input type="text" class="form-control form-control-sm"
+                   id="searchInput" placeholder="Search name, phone, template..."
+                   style="min-width:220px">
+            <select id="templateFilter" class="form-select form-select-sm" style="width:180px">
+                <option value="all">All templates</option>
+            </select>
+            <select id="statusFilter" class="form-select form-select-sm" style="width:160px">
+                <option value="all">All statuses</option>
+                <option value="accepted">API Accepted</option>
+                <option value="delivered">Delivered</option>
+                <option value="read">Read</option>
+                <option value="failed">Failed</option>
+                <option value="pending">Pending / Unknown</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
         <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Username</th>
-              <th>Phone Number</th>
-              <th>Template Name</th>
-              <th>Delivery Status</th>
-              <th>API Status</th>
-              <th>Response Code</th>
-              <th>Message ID</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody id="recipientTable">
-            <tr>
-              <td colspan="9" class="empty-message">Upload a file to view recipient records.</td>
-            </tr>
-          </tbody>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Phone Number</th>
+                    <th>Template</th>
+                    <th>Delivery Status</th>
+                    <th>API Status</th>
+                    <th>Response Code</th>
+                    <th>Message ID</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="recipientTable">
+                <tr><td colspan="9" class="empty-message">Upload a file to view records.</td></tr>
+            </tbody>
         </table>
-      </div>
-      <div class="muted-text mt-2" id="recordCount"></div>
     </div>
+    <div class="muted-text mt-2" id="recordCount"></div>
+</div>
 
-    <!-- TEMPLATE SUMMARY -->
-    <div class="content-card mb-4">
-      <h5>Template Summary</h5>
-      <div class="table-responsive">
+<!-- ORIGINAL HISTORY -->
+<div class="content-card mb-4">
+    <h5>Original API Request History</h5>
+    <p class="muted-text">Original source fields retained for checking and auditing.</p>
+    <div class="table-responsive">
         <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>Template Name</th>
-              <th>Total Requests</th>
-              <th>Accepted by API</th>
-              <th>API Failed</th>
-            </tr>
-          </thead>
-          <tbody id="templateTable"></tbody>
+            <thead>
+                <tr>
+                    <th>Application</th>
+                    <th>Status</th>
+                    <th>Call</th>
+                    <th>Response Code</th>
+                    <th>Request URL</th>
+                    <th>Template</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
         </table>
-      </div>
     </div>
+</div>
 
-    <!-- API HISTORY -->
-    <div class="content-card mb-4">
-      <h5>Original API Request History</h5>
-      <p class="muted-text">The original API fields are retained for checking and auditing.</p>
-      <div class="table-responsive">
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>Application</th>
-              <th>Status</th>
-              <th>Call</th>
-              <th>Response Code</th>
-              <th>Request URL</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody id="historyTable"></tbody>
-        </table>
-      </div>
-    </div>
+<div class="alert alert-info">
+    <strong>Important:</strong>
+    HTTP 200 indicates that the WhatsApp API accepted a request. It does not
+    confirm delivery. Delivered, Read and Failed counts are populated only
+    when actual WhatsApp delivery status information is present in the uploaded
+    data. Upload webhook status logs alongside API history if necessary.
+</div>
 
-    <div class="alert alert-info">
-      <strong>Delivery status note:</strong>
-      A successful API response (such as HTTP 200 with a WhatsApp message ID) means the request was accepted by the API. It does not prove that the message was delivered or read. Actual Delivered, Read and Failed statuses require WhatsApp webhook status records.
-    </div>
-
-  </div>
+</div>
 </main>
 
 <script>
-  let recipientRecords = [];
-  let rawRecords = [];
-  let charts = {};
+"use strict";
 
-  const fileInput = document.getElementById("fileInput");
-  const uploadBox = document.getElementById("uploadBox");
+let recipientRecords = [];
+let rawRecords = [];
+let charts = {};
 
-  // Upload file
-  fileInput.addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (file) readFile(file);
-  });
+const fileInput = document.getElementById("fileInput");
+const uploadBox = document.getElementById("uploadBox");
 
-  // Drag and drop support
-  uploadBox.addEventListener("dragover", function(event) {
-    event.preventDefault();
-    uploadBox.style.borderColor = "#2563eb";
-  });
+const $ = id => document.getElementById(id);
 
-  uploadBox.addEventListener("dragleave", function() {
-    uploadBox.style.borderColor = "#94a3b8";
-  });
+function showMessage(message, type = "info") {
+    $("message").innerHTML =
+        `<div class="alert alert-${type}">${escapeHTML(message)}</div>`;
+}
 
-  uploadBox.addEventListener("drop", function(event) {
-    event.preventDefault();
-    uploadBox.style.borderColor = "#94a3b8";
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;",
+        '"':"&quot;", "'":"&#39;"
+    })[char]);
+}
 
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      fileInput.files = event.dataTransfer.files;
-      readFile(file);
-    }
-  });
-
-  function showMessage(message, type = "info") {
-    document.getElementById("message").innerHTML =
-      `<div class="alert alert-${type}">${escapeHTML(message)}</div>`;
-  }
-
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, function(char) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      }[char];
-    });
-  }
-
-  // Normalize column names to handle spaces and non-breaking spaces
-  function normalizeHeader(value) {
+function normalizeHeader(value) {
     return String(value ?? "")
-      .replace(/\u00a0/g, " ")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  }
+        .replace(/\u00a0/g, " ")
+        .trim().toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+}
 
-  function getCell(row, possibleNames) {
-    const keys = Object.keys(row);
-
-    for (const name of possibleNames) {
-      const wanted = normalizeHeader(name);
-      const matchingKey = keys.find(key => normalizeHeader(key) === wanted);
-
-      if (matchingKey !== undefined && row[matchingKey] !== null &&
-          row[matchingKey] !== undefined) {
-        return row[matchingKey];
-      }
+function getCell(row, names) {
+    const keys = Object.keys(row || {});
+    for (const name of names) {
+        const wanted = normalizeHeader(name);
+        const key = keys.find(k => normalizeHeader(k) === wanted);
+        if (key !== undefined && row[key] !== null && row[key] !== undefined) {
+            return row[key];
+        }
     }
     return "";
-  }
+}
 
-  // Parse JSON stored inside the Request and Response Excel cells
-  function parseJSON(value) {
+function parseJSON(value) {
     if (value && typeof value === "object") return value;
     if (!value) return {};
 
     let text = String(value).trim();
 
-    // Handle Excel cells with an extra pair of wrapping quotes
     if (text.startsWith("'") && text.endsWith("'")) {
-      text = text.slice(1, -1);
+        text = text.slice(1, -1);
     }
 
     try {
-      return JSON.parse(text);
-    } catch (error) {
-      return {};
+        return JSON.parse(text);
+    } catch (e) {
+        return {};
     }
-  }
+}
 
-  function getUsername(request) {
+function firstValue(...values) {
+    for (const value of values) {
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+        }
+    }
+    return "";
+}
+
+function normalizePhone(value) {
+    if (!value) return "";
+    return String(value).trim().replace(/^whatsapp:/i, "").replace(/\s/g, "");
+}
+
+/* ------------------------------
+   RECIPIENT NAME EXTRACTION
+-------------------------------- */
+
+function getUsername(request, response, row) {
+
+    // Prefer explicit recipient/customer details.
+    const explicit = firstValue(
+        getCell(row, ["Username", "Recipient Name", "Customer Name", "Name"]),
+        request?.recipient_name,
+        request?.username,
+        request?.customer_name,
+        request?.name,
+        request?.customer?.name,
+        request?.contact?.name,
+        response?.contacts?.[0]?.profile?.name,
+        response?.contacts?.[0]?.name
+    );
+
+    if (explicit) return explicit;
+
+    // Fallback: first text parameter in the BODY component.
+    // This is only reliable when the first body variable is the recipient name.
     const components = request?.template?.components || [];
-
-    // Find the BODY component rather than assuming it is always first
-    const body = components.find(component =>
-      String(component.type || "").toLowerCase() === "body"
+    const body = components.find(c =>
+        String(c.type || "").toLowerCase() === "body"
     );
 
     const parameters = body?.parameters || [];
-
-    // Prefer the first text parameter in the body
-    const textParameter = parameters.find(parameter =>
-      parameter.type === "text" && parameter.text
+    const firstText = parameters.find(p =>
+        String(p.type || "").toLowerCase() === "text" &&
+        p.text !== undefined && p.text !== null
     );
 
-    return textParameter?.text || "Not available";
-  }
+    return firstText ? String(firstText.text) : "Not available";
+}
 
-  function getPhoneNumber(request, response) {
-    return request?.to ||
-      response?.contacts?.[0]?.wa_id ||
-      response?.contacts?.[0]?.input ||
-      "Not available";
-  }
+/* ------------------------------
+   PHONE EXTRACTION
+-------------------------------- */
 
-  function getMessageId(response) {
-    return response?.messages?.[0]?.id || "Not available";
-  }
+function getPhoneNumber(request, response, row) {
+    return normalizePhone(firstValue(
+        getCell(row, ["Phone Number", "Phone", "Mobile", "Recipient Phone"]),
+        request?.to,
+        request?.recipient,
+        request?.phone,
+        request?.phone_number,
+        request?.contacts?.[0]?.wa_id,
+        response?.contacts?.[0]?.wa_id,
+        response?.contacts?.[0]?.input
+    )) || "Not available";
+}
 
-  function getTemplateName(request) {
-    return request?.template?.name || "Not available";
-  }
+function getTemplateName(request, row) {
+    return firstValue(
+        getCell(row, ["Template Name", "Template"]),
+        request?.template?.name,
+        request?.template_name,
+        request?.templateName
+    ) || "Not available";
+}
 
-  function getDeliveryStatus(apiStatus, responseCode, response) {
-    const status = String(apiStatus || "").toLowerCase();
+function getMessageId(response, row) {
+    return firstValue(
+        getCell(row, ["Message ID", "Message Id", "WAMID"]),
+        response?.messages?.[0]?.id,
+        response?.message_id,
+        response?.messageId
+    ) || "Not available";
+}
+
+/* ------------------------------
+   API STATUS
+-------------------------------- */
+
+function getAPIStatus(apiStatus, responseCode, response) {
+    const status = String(apiStatus || "").toLowerCase().trim();
     const code = Number(responseCode);
 
     if (status.includes("fail") || status.includes("error") ||
         (Number.isFinite(code) && code >= 400)) {
-      return "API Failed";
+        return "API Failed";
     }
 
     if (Number.isFinite(code) && code >= 200 && code < 300) {
-      return "Accepted by API";
+        return "Accepted by API";
     }
 
-    if (status === "success" && response?.messages?.length) {
-      return "Accepted by API";
+    if (status === "success" || status === "successful") {
+        return "Accepted by API";
+    }
+
+    if (response?.messages?.length) {
+        return "Accepted by API";
     }
 
     return "Unknown";
-  }
+}
 
-  function formatDate(value) {
-    if (!value) return "Not available";
+/* ------------------------------
+   DELIVERY STATUS EXTRACTION
+-------------------------------- */
 
-    const original = String(value).trim();
+function normalizeDeliveryStatus(value) {
+    const s = String(value || "").toLowerCase().trim();
 
-    // Convert UTC into GMT for consistent browser parsing
-    const normalized = original.replace(/\bUTC\b/g, "GMT");
+    if (s === "delivered") return "Delivered";
+    if (s === "read") return "Read";
+    if (s === "failed") return "Failed";
+    if (s === "sent") return "Sent";
+
+    return "";
+}
+
+/*
+   Collect delivery events from:
+   1. Webhook JSON in Response
+   2. Explicit delivery status columns
+   3. Separate webhook rows
+*/
+
+function collectStatusEvents(object, events = []) {
+    if (!object || typeof object !== "object") return events;
+
+    if (Array.isArray(object)) {
+        object.forEach(item => collectStatusEvents(item, events));
+        return events;
+    }
+
+    // Standard WhatsApp webhook status object.
+    if (object.id && object.status) {
+        const status = normalizeDeliveryStatus(object.status);
+        if (status) {
+            events.push({
+                id: String(object.id),
+                status,
+                timestamp: object.timestamp || ""
+            });
+        }
+    }
+
+    // Explicit nested statuses array.
+    if (Array.isArray(object.statuses)) {
+        object.statuses.forEach(item => collectStatusEvents(item, events));
+    }
+
+    for (const [key, value] of Object.entries(object)) {
+        if (key !== "statuses" && value && typeof value === "object") {
+            collectStatusEvents(value, events);
+        }
+    }
+
+    return events;
+}
+
+function getDirectDeliveryStatus(row, response) {
+    const direct = normalizeDeliveryStatus(firstValue(
+        getCell(row, ["Delivery Status", "Message Status", "Webhook Status"]),
+        response?.delivery_status,
+        response?.message_status
+    ));
+
+    if (direct) return direct;
+
+    const events = collectStatusEvents(response);
+    if (!events.length) return "";
+
+    return events[events.length - 1].status;
+}
+
+function statusPriority(status) {
+    return {
+        "Failed": 5,
+        "Read": 4,
+        "Delivered": 3,
+        "Sent": 2
+    }[status] || 0;
+}
+
+/* ------------------------------
+   DATE FORMATTING
+-------------------------------- */
+
+function parseDate(value) {
+    if (!value) return null;
+
+    // Excel serial date support.
+    if (typeof value === "number" && value > 20000 && value < 80000) {
+        const date = XLSX.SSF.parse_date_code(value);
+        if (date) {
+            return new Date(Date.UTC(
+                date.y, date.m - 1, date.d,
+                date.H, date.M, Math.floor(date.S)
+            ));
+        }
+    }
+
+    const normalized = String(value).trim().replace(/\bUTC\b/g, "GMT");
     const date = new Date(normalized);
 
-    if (isNaN(date.getTime())) return original;
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value) {
+    const date = parseDate(value);
+    if (!date) return value ? String(value) : "Not available";
 
     return date.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true
+        day:"2-digit",
+        month:"short",
+        year:"numeric",
+        hour:"2-digit",
+        minute:"2-digit",
+        hour12:true
     });
-  }
+}
 
-  function getDateKey(value) {
-    if (!value) return "Unknown";
+function getDateKey(value) {
+    const date = parseDate(value);
+    if (!date) return "Unknown";
 
-    const date = new Date(String(value).replace(/\bUTC\b/g, "GMT"));
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+}
 
-    if (isNaN(date.getTime())) return "Unknown";
+/* ------------------------------
+   EXTRACT API RECORDS
+-------------------------------- */
 
-    return date.toISOString().slice(0, 10);
-  }
-
-  // Convert every valid API log row into one recipient record
-  function extractRecord(row) {
+function extractRecord(row, index) {
     const application = getCell(row, ["Application"]);
-    const apiStatus = getCell(row, ["Status"]);
-    const call = getCell(row, ["Call"]);
-    const requestUrl = getCell(row, ["Request Url", "Request URL"]);
-    const responseCode = getCell(row, ["Response Code"]);
-    const requestRaw = getCell(row, ["Request"]);
-    const responseRaw = getCell(row, ["Response"]);
-    const time = getCell(row, ["Time"]);
+    const apiStatus = getCell(row, ["Status", "API Status"]);
+    const call = getCell(row, ["Call", "Method"]);
+    const requestUrl = getCell(row, ["Request Url", "Request URL", "URL"]);
+    const responseCode = getCell(row, ["Response Code", "HTTP Status"]);
+    const requestRaw = getCell(row, ["Request", "Request Body"]);
+    const responseRaw = getCell(row, ["Response", "Response Body"]);
+    const time = getCell(row, ["Time", "Timestamp", "Date"]);
 
     const request = parseJSON(requestRaw);
     const response = parseJSON(responseRaw);
 
-    const username = getUsername(request);
-    const phone = getPhoneNumber(request, response);
-    const template = getTemplateName(request);
-    const messageId = getMessageId(response);
+    const messageId = getMessageId(response, row);
+    const phone = getPhoneNumber(request, response, row);
+    const template = getTemplateName(request, row);
+    const username = getUsername(request, response, row);
 
     const hasUsefulData = Boolean(
-      requestRaw || responseRaw || responseCode || time || phone !== "Not available"
+        requestRaw || responseRaw || responseCode ||
+        request?.template || messageId !== "Not available" ||
+        phone !== "Not available"
     );
 
     if (!hasUsefulData) return null;
 
-    const deliveryStatus = getDeliveryStatus(apiStatus, responseCode, response);
-
     return {
-      application,
-      apiStatus,
-      call,
-      requestUrl,
-      responseCode: String(responseCode || ""),
-      requestRaw: typeof requestRaw === "string" ? requestRaw : JSON.stringify(requestRaw || {}),
-      responseRaw: typeof responseRaw === "string" ? responseRaw : JSON.stringify(responseRaw || {}),
-      username,
-      phone,
-      template,
-      messageId,
-      deliveryStatus,
-      time: String(time || ""),
-      formattedTime: formatDate(time),
-      dateKey: getDateKey(time)
+        sourceIndex: index,
+        application: String(application || ""),
+        apiStatus: String(apiStatus || ""),
+        call: String(call || ""),
+        requestUrl: String(requestUrl || ""),
+        responseCode: String(responseCode || ""),
+        requestRaw: typeof requestRaw === "string"
+            ? requestRaw : JSON.stringify(requestRaw || {}),
+        responseRaw: typeof responseRaw === "string"
+            ? responseRaw : JSON.stringify(responseRaw || {}),
+        username,
+        phone,
+        template,
+        messageId,
+        apiResult: getAPIStatus(apiStatus, responseCode, response),
+        deliveryStatus: getDirectDeliveryStatus(row, response),
+        time: String(time || ""),
+        formattedTime: formatDate(time),
+        dateKey: getDateKey(time)
     };
-  }
+}
 
-  // Read uploaded Excel or CSV file
-  function readFile(file) {
-    document.getElementById("fileName").textContent = "Selected file: " + file.name;
+/* ------------------------------
+   UPLOAD FILE
+-------------------------------- */
+
+fileInput.addEventListener("change", event => {
+    const file = event.target.files[0];
+    if (file) readFile(file);
+});
+
+uploadBox.addEventListener("dragover", event => {
+    event.preventDefault();
+    uploadBox.style.borderColor = "#2563eb";
+});
+
+uploadBox.addEventListener("dragleave", () => {
+    uploadBox.style.borderColor = "#94a3b8";
+});
+
+uploadBox.addEventListener("drop", event => {
+    event.preventDefault();
+    uploadBox.style.borderColor = "#94a3b8";
+
+    const file = event.dataTransfer.files[0];
+    if (file) {
+        fileInput.files = event.dataTransfer.files;
+        readFile(file);
+    }
+});
+
+function readFile(file) {
+    $("fileName").textContent = "Selected file: " + file.name;
     showMessage("Reading your file...", "info");
 
     const reader = new FileReader();
 
-    reader.onload = function(event) {
-      try {
-        const data = new Uint8Array(event.target.result);
+    reader.onload = event => {
+        try {
+            const workbook = XLSX.read(
+                new Uint8Array(event.target.result),
+                { type:"array", cellDates:true }
+            );
 
-        const workbook = XLSX.read(data, {
-          type: "array",
-          cellDates: false
-        });
+            if (!workbook.SheetNames.length) {
+                throw new Error("No worksheet found.");
+            }
 
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        const rows = XLSX.utils.sheet_to_json(sheet, {
-          defval: "",
-          raw: false
-        });
+            const rows = XLSX.utils.sheet_to_json(sheet, {
+                defval:"",
+                raw:false
+            });
 
-        if (!rows.length) {
-          showMessage("No records found in the uploaded file.", "warning");
-          return;
+            if (!rows.length) {
+                showMessage("No records found in the uploaded file.", "warning");
+                return;
+            }
+
+            const headers = Object.keys(rows[0]).map(normalizeHeader);
+
+            const hasRequestData = headers.some(h =>
+                ["request", "requestbody", "requesturl", "url"].includes(h)
+            );
+
+            const hasResponseData = headers.some(h =>
+                ["response", "responsebody", "responsecode", "httpstatus"].includes(h)
+            );
+
+            if (!hasRequestData && !hasResponseData) {
+                throw new Error(
+                    "Could not identify Request or Response columns. Please check your Excel headers."
+                );
+            }
+
+            rawRecords = rows;
+
+            const extracted = rows
+                .map((row, index) => extractRecord(row, index))
+                .filter(Boolean);
+
+            // Build a message ID -> delivery status map using all uploaded rows.
+            const statusMap = new Map();
+
+            rows.forEach(row => {
+                const response = parseJSON(
+                    getCell(row, ["Response", "Response Body"])
+                );
+
+                const request = parseJSON(
+                    getCell(row, ["Request", "Request Body"])
+                );
+
+                const events = [
+                    ...collectStatusEvents(response),
+                    ...collectStatusEvents(request)
+                ];
+
+                // Also accept a flat webhook row containing ID and Status.
+                const flatId = firstValue(
+                    getCell(row, ["Message ID", "Message Id", "WAMID"]),
+                    response?.id,
+                    response?.message_id
+                );
+
+                const flatStatus = normalizeDeliveryStatus(firstValue(
+                    getCell(row, ["Delivery Status", "Message Status", "Webhook Status"]),
+                    response?.status
+                ));
+
+                if (flatId && flatStatus) {
+                    events.push({ id:flatId, status:flatStatus });
+                }
+
+                events.forEach(item => {
+                    if (!item.id) return;
+
+                    const old = statusMap.get(item.id);
+                    if (!old || statusPriority(item.status) > statusPriority(old)) {
+                        statusMap.set(item.id, item.status);
+                    }
+                });
+            });
+
+            recipientRecords = extracted.map(record => {
+                const webhookStatus = statusMap.get(record.messageId);
+
+                // Prefer webhook status over a directly supplied status.
+                if (webhookStatus) {
+                    record.deliveryStatus = webhookStatus;
+                }
+
+                if (!record.deliveryStatus) {
+                    record.deliveryStatus = "Pending / Unknown";
+                }
+
+                return record;
+            });
+
+            if (!recipientRecords.length) {
+                $("dashboard").style.display = "none";
+                throw new Error("No usable API records could be extracted.");
+            }
+
+            $("dashboard").style.display = "block";
+            $("excelBtn").disabled = false;
+            $("csvBtn").disabled = false;
+
+            updateDashboard();
+
+            showMessage(
+                "File uploaded successfully. " +
+                recipientRecords.length +
+                " API records processed. " +
+                statusMap.size +
+                " message delivery status records detected.",
+                "success"
+            );
+
+        } catch (error) {
+            console.error(error);
+            showMessage(error.message || "Unable to read this file.", "danger");
         }
-
-        const headers = Object.keys(rows[0]).map(normalizeHeader);
-        const requiredHeaders = [
-          "application", "status", "call", "requesturl",
-          "responsecode", "request", "response", "time"
-        ];
-
-        const missingHeaders = requiredHeaders.filter(header =>
-          !headers.includes(header)
-        );
-
-        if (missingHeaders.length) {
-          showMessage(
-            "Some expected columns are missing: " + missingHeaders.join(", ") +
-            ". Please check that the first row contains your API column headers.",
-            "danger"
-          );
-          return;
-        }
-
-        rawRecords = rows;
-        recipientRecords = rows
-          .map(extractRecord)
-          .filter(record => record !== null);
-
-        if (!recipientRecords.length) {
-          showMessage("No complete API records could be extracted from this file.", "warning");
-          document.getElementById("dashboard").style.display = "none";
-          return;
-        }
-
-        document.getElementById("dashboard").style.display = "block";
-        document.getElementById("excelBtn").disabled = false;
-        document.getElementById("csvBtn").disabled = false;
-
-        updateDashboard();
-        showMessage(
-          "File uploaded successfully. " + recipientRecords.length +
-          " API records were extracted.",
-          "success"
-        );
-
-      } catch (error) {
-        console.error(error);
-        showMessage("Unable to read this file. Please check the file format and try again.", "danger");
-      }
     };
 
-    reader.onerror = function() {
-      showMessage("The file could not be read by your browser.", "danger");
+    reader.onerror = () => {
+        showMessage("The file could not be read by your browser.", "danger");
     };
 
     reader.readAsArrayBuffer(file);
-  }
+}
 
-  // Update dashboard metrics, charts and tables
-  function updateDashboard() {
-    const total = recipientRecords.length;
-    const accepted = recipientRecords.filter(r => r.deliveryStatus === "Accepted by API").length;
-    const failed = recipientRecords.filter(r => r.deliveryStatus === "API Failed").length;
+/* ------------------------------
+   SUMMARY CALCULATIONS
+-------------------------------- */
+
+function getCounts(records) {
+    return {
+        total: records.length,
+        accepted: records.filter(r => r.apiResult === "Accepted by API").length,
+        apiFailed: records.filter(r => r.apiResult === "API Failed").length,
+        delivered: records.filter(r => r.deliveryStatus === "Delivered").length,
+        read: records.filter(r => r.deliveryStatus === "Read").length,
+        failed: records.filter(r => r.deliveryStatus === "Failed").length,
+        pending: records.filter(r =>
+            ["Sent", "Pending / Unknown"].includes(r.deliveryStatus)
+        ).length
+    };
+}
+
+function updateDashboard() {
+    const c = getCounts(recipientRecords);
+
     const uniquePhones = new Set(
-      recipientRecords
-        .filter(r => r.phone !== "Not available")
-        .map(r => r.phone)
+        recipientRecords
+            .filter(r => r.phone !== "Not available")
+            .map(r => r.phone)
     ).size;
-
-    const http200Count = recipientRecords.filter(r =>
-      Number(r.responseCode) === 200
-    ).length;
 
     const uniqueTemplates = new Set(
-      recipientRecords
-        .filter(r => r.template !== "Not available")
-        .map(r => r.template)
+        recipientRecords
+            .filter(r => r.template !== "Not available")
+            .map(r => r.template)
     ).size;
 
-    document.getElementById("totalRequests").textContent = total;
-    document.getElementById("acceptedCount").textContent = accepted;
-    document.getElementById("failedCount").textContent = failed;
-    document.getElementById("uniqueRecipients").textContent = uniquePhones;
-    document.getElementById("http200").textContent = http200Count;
-    document.getElementById("templateCount").textContent = uniqueTemplates;
+    $("totalRequests").textContent = c.total;
+    $("acceptedCount").textContent = c.accepted;
+    $("deliveredCount").textContent = c.delivered;
+    $("failedCount").textContent = c.failed;
+    $("readCount").textContent = c.read;
+    $("uniqueRecipients").textContent = uniquePhones;
+    $("templateCount").textContent = uniqueTemplates;
 
-    document.getElementById("successRate").textContent =
-      (total ? (accepted / total * 100).toFixed(1) : 0) + "%";
+    $("successRate").textContent =
+        (c.total ? (c.accepted / c.total * 100).toFixed(1) : 0) + "%";
 
-    document.getElementById("failedRate").textContent =
-      (total ? (failed / total * 100).toFixed(1) : 0) + "%";
-
+    renderTemplateTable();
+    renderTemplateFilter();
     renderCharts();
     renderRecipientTable();
-    renderTemplateTable();
     renderHistoryTable();
-  }
+}
 
-  // Destroy old charts before drawing updated charts
-  function createChart(id, config) {
-    if (charts[id]) charts[id].destroy();
+/* ------------------------------
+   TEMPLATE-WISE SUMMARY
+-------------------------------- */
 
-    const canvas = document.getElementById(id);
-    charts[id] = new Chart(canvas, config);
-  }
+function buildTemplateSummary(records) {
+    const summary = {};
 
-  function renderCharts() {
-    const accepted = recipientRecords.filter(r => r.deliveryStatus === "Accepted by API").length;
-    const failed = recipientRecords.filter(r => r.deliveryStatus === "API Failed").length;
-    const unknown = recipientRecords.filter(r => r.deliveryStatus === "Unknown").length;
+    records.forEach(r => {
+        const name = r.template || "Not available";
 
-    createChart("statusChart", {
-      type: "doughnut",
-      data: {
-        labels: ["Accepted by API", "API Failed", "Unknown"],
-        datasets: [{
-          data: [accepted, failed, unknown],
-          backgroundColor: ["#16a34a", "#dc2626", "#f59e0b"],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: "bottom" }
+        if (!summary[name]) {
+            summary[name] = {
+                total:0,
+                accepted:0,
+                delivered:0,
+                read:0,
+                failed:0,
+                pending:0,
+                apiFailed:0
+            };
         }
-      }
+
+        const s = summary[name];
+        s.total++;
+
+        if (r.apiResult === "Accepted by API") s.accepted++;
+        if (r.apiResult === "API Failed") s.apiFailed++;
+
+        if (r.deliveryStatus === "Delivered") s.delivered++;
+        else if (r.deliveryStatus === "Read") s.read++;
+        else if (r.deliveryStatus === "Failed") s.failed++;
+        else s.pending++;
     });
 
-    const responseCodes = {};
+    return summary;
+}
+
+function renderTemplateTable() {
+    const summary = buildTemplateSummary(recipientRecords);
+
+    $("templateTable").innerHTML =
+        Object.entries(summary).map(([name, s]) => {
+            const rate = s.total
+                ? (s.accepted / s.total * 100).toFixed(1)
+                : "0.0";
+
+            return `
+                <tr>
+                    <td class="fw-bold">${escapeHTML(name)}</td>
+                    <td>${s.total}</td>
+                    <td class="text-success fw-bold">${s.accepted}</td>
+                    <td>${s.delivered}</td>
+                    <td>${s.read}</td>
+                    <td class="text-danger fw-bold">${s.failed}</td>
+                    <td>${s.pending}</td>
+                    <td>${rate}%</td>
+                </tr>
+            `;
+        }).join("");
+}
+
+function renderTemplateFilter() {
+    const select = $("templateFilter");
+    const previous = select.value;
+
+    const templates = [...new Set(
+        recipientRecords.map(r => r.template)
+    )];
+
+    select.innerHTML = '<option value="all">All templates</option>' +
+        templates.map(t =>
+            `<option value="${escapeHTML(t)}">${escapeHTML(t)}</option>`
+        ).join("");
+
+    if (templates.includes(previous)) select.value = previous;
+}
+
+/* ------------------------------
+   CHARTS
+-------------------------------- */
+
+function createChart(id, config) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), config);
+}
+
+function renderCharts() {
+    const c = getCounts(recipientRecords);
+
+    createChart("statusChart", {
+        type:"doughnut",
+        data:{
+            labels:["Delivered", "Read", "Failed", "Pending / Unknown"],
+            datasets:[{
+                data:[c.delivered, c.read, c.failed, c.pending],
+                backgroundColor:["#2563eb", "#8b5cf6", "#dc2626", "#f59e0b"],
+                borderWidth:0
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{legend:{position:"bottom"}}
+        }
+    });
+
+    const codes = {};
     recipientRecords.forEach(r => {
-      const code = r.responseCode || "Not available";
-      responseCodes[code] = (responseCodes[code] || 0) + 1;
+        const code = r.responseCode || "Not available";
+        codes[code] = (codes[code] || 0) + 1;
     });
 
     createChart("responseChart", {
-      type: "bar",
-      data: {
-        labels: Object.keys(responseCodes),
-        datasets: [{
-          label: "API Requests",
-          data: Object.values(responseCodes),
-          backgroundColor: "#3b82f6",
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
+        type:"bar",
+        data:{
+            labels:Object.keys(codes),
+            datasets:[{
+                label:"API Requests",
+                data:Object.values(codes),
+                backgroundColor:"#3b82f6",
+                borderRadius:6
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{y:{beginAtZero:true,ticks:{precision:0}}}
+        }
     });
 
     const templates = {};
     recipientRecords.forEach(r => {
-      templates[r.template] = (templates[r.template] || 0) + 1;
+        templates[r.template] = (templates[r.template] || 0) + 1;
     });
 
     createChart("templateChart", {
-      type: "bar",
-      data: {
-        labels: Object.keys(templates),
-        datasets: [{
-          label: "Requests",
-          data: Object.values(templates),
-          backgroundColor: "#8b5cf6",
-          borderRadius: 6
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
+        type:"bar",
+        data:{
+            labels:Object.keys(templates),
+            datasets:[{
+                label:"Requests",
+                data:Object.values(templates),
+                backgroundColor:"#8b5cf6",
+                borderRadius:6
+            }]
+        },
+        options:{
+            indexAxis:"y",
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{x:{beginAtZero:true,ticks:{precision:0}}}
+        }
     });
 
     const dates = {};
     recipientRecords.forEach(r => {
-      dates[r.dateKey] = (dates[r.dateKey] || 0) + 1;
+        dates[r.dateKey] = (dates[r.dateKey] || 0) + 1;
     });
 
-    const sortedDates = Object.keys(dates).sort();
+    const sorted = Object.keys(dates).sort();
 
     createChart("dateChart", {
-      type: "line",
-      data: {
-        labels: sortedDates,
-        datasets: [{
-          label: "API Requests",
-          data: sortedDates.map(date => dates[date]),
-          borderColor: "#2563eb",
-          backgroundColor: "rgba(37,99,235,.12)",
-          fill: true,
-          tension: .35
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
+        type:"line",
+        data:{
+            labels:sorted,
+            datasets:[{
+                label:"API Requests",
+                data:sorted.map(d => dates[d]),
+                borderColor:"#2563eb",
+                backgroundColor:"rgba(37,99,235,.12)",
+                fill:true,
+                tension:.35
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{y:{beginAtZero:true,ticks:{precision:0}}}
+        }
     });
-  }
+}
 
-  // Recipient table with search and filter
-  function renderRecipientTable() {
-    const search = document.getElementById("searchInput").value.toLowerCase().trim();
-    const filter = document.getElementById("statusFilter").value;
+/* ------------------------------
+   RECIPIENT TABLE AND FILTERS
+-------------------------------- */
+
+function statusClass(status) {
+    return {
+        "Accepted by API":"accepted",
+        "Delivered":"delivered",
+        "Read":"read",
+        "Failed":"failed",
+        "Pending / Unknown":"pending",
+        "Sent":"pending"
+    }[status] || "unknown";
+}
+
+function renderRecipientTable() {
+    const search = $("searchInput").value.toLowerCase().trim();
+    const status = $("statusFilter").value;
+    const template = $("templateFilter").value;
 
     const filtered = recipientRecords.filter(r => {
-      const searchable = [
-        r.username, r.phone, r.template, r.messageId,
-        r.apiStatus, r.responseCode
-      ].join(" ").toLowerCase();
+        const text = [
+            r.username, r.phone, r.template,
+            r.messageId, r.apiStatus, r.responseCode
+        ].join(" ").toLowerCase();
 
-      const matchesSearch = searchable.includes(search);
+        const matchesSearch = text.includes(search);
+        const matchesTemplate = template === "all" || r.template === template;
 
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "accepted" && r.deliveryStatus === "Accepted by API") ||
-        (filter === "failed" && r.deliveryStatus === "API Failed") ||
-        (filter === "unknown" && r.deliveryStatus === "Unknown");
+        let matchesStatus = true;
 
-      return matchesSearch && matchesFilter;
+        if (status === "accepted") {
+            matchesStatus = r.apiResult === "Accepted by API";
+        } else if (status === "delivered") {
+            matchesStatus = r.deliveryStatus === "Delivered";
+        } else if (status === "read") {
+            matchesStatus = r.deliveryStatus === "Read";
+        } else if (status === "failed") {
+            matchesStatus = r.deliveryStatus === "Failed" ||
+                            r.apiResult === "API Failed";
+        } else if (status === "pending") {
+            matchesStatus = ["Pending / Unknown", "Sent"].includes(r.deliveryStatus);
+        }
+
+        return matchesSearch && matchesTemplate && matchesStatus;
     });
 
-    const tbody = document.getElementById("recipientTable");
+    $("recipientTable").innerHTML = filtered.length
+        ? filtered.map((r, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td class="fw-semibold">${escapeHTML(r.username)}</td>
+                <td>${escapeHTML(r.phone)}</td>
+                <td>${escapeHTML(r.template)}</td>
+                <td>
+                    <span class="status-badge ${statusClass(r.deliveryStatus)}">
+                        ${escapeHTML(r.deliveryStatus)}
+                    </span>
+                </td>
+                <td>${escapeHTML(r.apiResult)}</td>
+                <td>${escapeHTML(r.responseCode || "—")}</td>
+                <td title="${escapeHTML(r.messageId)}">
+                    ${escapeHTML(r.messageId.length > 22
+                        ? r.messageId.substring(0, 22) + "..."
+                        : r.messageId)}
+                </td>
+                <td>${escapeHTML(r.formattedTime)}</td>
+            </tr>
+        `).join("")
+        : '<tr><td colspan="9" class="empty-message">No matching records found.</td></tr>';
 
-    if (!filtered.length) {
-      tbody.innerHTML = `<tr><td colspan="9" class="empty-message">No matching records found.</td></tr>`;
-    } else {
-      tbody.innerHTML = filtered.map((r, index) => {
-        let badgeClass = "unknown";
+    $("recordCount").textContent =
+        `Showing ${filtered.length} of ${recipientRecords.length} records`;
+}
 
-        if (r.deliveryStatus === "Accepted by API") badgeClass = "accepted";
-        if (r.deliveryStatus === "API Failed") badgeClass = "failed";
+$("searchInput").addEventListener("input", renderRecipientTable);
+$("statusFilter").addEventListener("change", renderRecipientTable);
+$("templateFilter").addEventListener("change", renderRecipientTable);
 
-        return `
-          <tr>
-            <td>${index + 1}</td>
-            <td class="fw-semibold">${escapeHTML(r.username)}</td>
-            <td>${escapeHTML(r.phone)}</td>
+/* ------------------------------
+   API HISTORY
+-------------------------------- */
+
+function renderHistoryTable() {
+    $("historyTable").innerHTML = recipientRecords.map(r => `
+        <tr>
+            <td>${escapeHTML(r.application)}</td>
+            <td>${escapeHTML(r.apiStatus)}</td>
+            <td>${escapeHTML(r.call)}</td>
+            <td>${escapeHTML(r.responseCode)}</td>
+            <td style="max-width:260px;overflow-wrap:anywhere">
+                ${escapeHTML(r.requestUrl)}
+            </td>
             <td>${escapeHTML(r.template)}</td>
-            <td><span class="status-badge ${badgeClass}">${escapeHTML(r.deliveryStatus)}</span></td>
-            <td>${escapeHTML(r.apiStatus || "Not available")}</td>
-            <td>${escapeHTML(r.responseCode || "—")}</td>
-            <td title="${escapeHTML(r.messageId)}">${escapeHTML(
-              r.messageId === "Not available" ? r.messageId :
-              r.messageId.substring(0, 20) + "..."
-            )}</td>
             <td>${escapeHTML(r.formattedTime)}</td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    document.getElementById("recordCount").textContent =
-      "Showing " + filtered.length + " of " + recipientRecords.length + " records";
-  }
-
-  document.getElementById("searchInput").addEventListener("input", renderRecipientTable);
-  document.getElementById("statusFilter").addEventListener("change", renderRecipientTable);
-
-  function renderTemplateTable() {
-    const summary = {};
-
-    recipientRecords.forEach(r => {
-      const name = r.template;
-
-      if (!summary[name]) {
-        summary[name] = { total: 0, accepted: 0, failed: 0 };
-      }
-
-      summary[name].total++;
-
-      if (r.deliveryStatus === "Accepted by API") summary[name].accepted++;
-      if (r.deliveryStatus === "API Failed") summary[name].failed++;
-    });
-
-    document.getElementById("templateTable").innerHTML =
-      Object.entries(summary).map(([name, values]) => `
-        <tr>
-          <td class="fw-semibold">${escapeHTML(name)}</td>
-          <td>${values.total}</td>
-          <td class="text-success fw-semibold">${values.accepted}</td>
-          <td class="text-danger fw-semibold">${values.failed}</td>
         </tr>
-      `).join("");
-  }
+    `).join("");
+}
 
-  function renderHistoryTable() {
-    document.getElementById("historyTable").innerHTML =
-      recipientRecords.map(r => `
-        <tr>
-          <td>${escapeHTML(r.application)}</td>
-          <td>${escapeHTML(r.apiStatus)}</td>
-          <td>${escapeHTML(r.call)}</td>
-          <td>${escapeHTML(r.responseCode)}</td>
-          <td style="max-width:260px; overflow-wrap:anywhere;">
-            ${escapeHTML(r.requestUrl)}
-          </td>
-          <td>${escapeHTML(r.formattedTime)}</td>
-        </tr>
-      `).join("");
-  }
+/* ------------------------------
+   EXCEL EXPORT
+-------------------------------- */
 
-  // Excel export: recipient report, summary, and original API history
-  function downloadExcel() {
+function downloadExcel() {
     if (!recipientRecords.length) return;
 
     const wb = XLSX.utils.book_new();
+    const c = getCounts(recipientRecords);
+    const summary = buildTemplateSummary(recipientRecords);
 
-    const report = recipientRecords.map((r, index) => ({
-      "S.No": index + 1,
-      "Username": r.username,
-      "Phone Number": r.phone,
-      "Template Name": r.template,
-      "Delivery Status": r.deliveryStatus,
-      "API Status": r.apiStatus,
-      "Response Code": r.responseCode,
-      "Message ID": r.messageId,
-      "Time": r.formattedTime,
-      "Request URL": r.requestUrl
-    }));
-
-    const accepted = recipientRecords.filter(r => r.deliveryStatus === "Accepted by API").length;
-    const failed = recipientRecords.filter(r => r.deliveryStatus === "API Failed").length;
-
-    const summary = [
-      { Metric: "Total API Requests", Value: recipientRecords.length },
-      { Metric: "Accepted by API", Value: accepted },
-      { Metric: "API Failed", Value: failed },
-      { Metric: "Unique Recipients", Value: new Set(recipientRecords.filter(r => r.phone !== "Not available").map(r => r.phone)).size },
-      { Metric: "HTTP 200 Responses", Value: recipientRecords.filter(r => Number(r.responseCode) === 200).length },
-      { Metric: "Unique Templates", Value: new Set(recipientRecords.filter(r => r.template !== "Not available").map(r => r.template)).size }
+    // 1. Overall summary
+    const overall = [
+        {Metric:"Total API Requests", Value:c.total},
+        {Metric:"Accepted by API", Value:c.accepted},
+        {Metric:"API Failed", Value:c.apiFailed},
+        {Metric:"Delivered Messages", Value:c.delivered},
+        {Metric:"Read Messages", Value:c.read},
+        {Metric:"Failed Delivery Messages", Value:c.failed},
+        {Metric:"Pending / Unknown", Value:c.pending},
+        {
+            Metric:"Unique Recipients",
+            Value:new Set(recipientRecords
+                .filter(r => r.phone !== "Not available")
+                .map(r => r.phone)).size
+        },
+        {
+            Metric:"Unique Templates",
+            Value:Object.keys(summary).length
+        },
+        {
+            Metric:"API Success Rate",
+            Value:(c.total ? (c.accepted / c.total * 100).toFixed(2) : 0) + "%"
+        }
     ];
 
-    const history = recipientRecords.map(r => ({
-      "Application": r.application,
-      "Status": r.apiStatus,
-      "Call": r.call,
-      "Request Url": r.requestUrl,
-      "Response Code": r.responseCode,
-      "Request": r.requestRaw,
-      "Response": r.responseRaw,
-      "Time": r.time
+    // 2. Template performance
+    const templateRows = Object.entries(summary).map(([name, s]) => ({
+        "Template Name":name,
+        "Total Requests":s.total,
+        "API Accepted":s.accepted,
+        "API Failed":s.apiFailed,
+        "Delivered":s.delivered,
+        "Read":s.read,
+        "Failed Delivery":s.failed,
+        "Pending / Unknown":s.pending,
+        "API Success Rate":s.total
+            ? (s.accepted / s.total * 100).toFixed(2) + "%"
+            : "0%"
     }));
 
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(report), "Recipient Report");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Summary");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(history), "API History");
+    // 3. Recipient report
+    const recipientRows = recipientRecords.map((r, i) => ({
+        "S.No":i + 1,
+        "Username":r.username,
+        "Phone Number":r.phone,
+        "Template Name":r.template,
+        "API Result":r.apiResult,
+        "Delivery Status":r.deliveryStatus,
+        "Response Code":r.responseCode,
+        "Message ID":r.messageId,
+        "Time":r.formattedTime,
+        "Request URL":r.requestUrl
+    }));
 
-    XLSX.writeFile(wb, "WhatsApp_Broadcast_Report.xlsx");
-  }
+    // 4. Separate delivered records
+    const deliveredRows = recipientRows.filter((r, i) =>
+        recipientRecords[i].deliveryStatus === "Delivered"
+    );
 
-  // CSV export
-  function downloadCSV() {
+    // 5. Separate read records
+    const readRows = recipientRows.filter((r, i) =>
+        recipientRecords[i].deliveryStatus === "Read"
+    );
+
+    // 6. Separate failed records (delivery and API failures)
+    const failedRows = recipientRows.filter((r, i) =>
+        recipientRecords[i].deliveryStatus === "Failed" ||
+        recipientRecords[i].apiResult === "API Failed"
+    );
+
+    // 7. Pending records
+    const pendingRows = recipientRows.filter((r, i) =>
+        ["Pending / Unknown", "Sent"].includes(recipientRecords[i].deliveryStatus)
+    );
+
+    // 8. Original history
+    const historyRows = recipientRecords.map(r => ({
+        "Application":r.application,
+        "Status":r.apiStatus,
+        "Call":r.call,
+        "Request URL":r.requestUrl,
+        "Response Code":r.responseCode,
+        "Request":r.requestRaw,
+        "Response":r.responseRaw,
+        "Time":r.time,
+        "Template":r.template,
+        "Username":r.username,
+        "Phone":r.phone,
+        "Message ID":r.messageId
+    }));
+
+    function addSheet(data, name, emptyMessage) {
+        const safeData = data.length ? data : [{Information:emptyMessage}];
+        const sheet = XLSX.utils.json_to_sheet(safeData);
+        XLSX.utils.book_append_sheet(wb, sheet, name);
+    }
+
+    addSheet(overall, "Overall Summary");
+    addSheet(templateRows, "Template Performance");
+    addSheet(recipientRows, "Recipient Details");
+    addSheet(deliveredRows, "Delivered Messages", "No confirmed delivered records");
+    addSheet(readRows, "Read Messages", "No confirmed read records");
+    addSheet(failedRows, "Failed Messages", "No failed records");
+    addSheet(pendingRows, "Pending Messages", "No pending records");
+    addSheet(historyRows, "Original API History");
+
+    XLSX.writeFile(wb, "WhatsApp_Broadcast_Complete_Report.xlsx");
+}
+
+/* ------------------------------
+   CSV EXPORT
+-------------------------------- */
+
+function downloadCSV() {
     if (!recipientRecords.length) return;
 
     const rows = [
-      [
-        "Username", "Phone Number", "Template Name",
-        "Delivery Status", "API Status", "Response Code",
-        "Message ID", "Time"
-      ],
-      ...recipientRecords.map(r => [
-        r.username, r.phone, r.template,
-        r.deliveryStatus, r.apiStatus, r.responseCode,
-        r.messageId, r.formattedTime
-      ])
+        [
+            "Username", "Phone Number", "Template Name",
+            "API Result", "Delivery Status", "Response Code",
+            "Message ID", "Time"
+        ],
+        ...recipientRecords.map(r => [
+            r.username,
+            r.phone,
+            r.template,
+            r.apiResult,
+            r.deliveryStatus,
+            r.responseCode,
+            r.messageId,
+            r.formattedTime
+        ])
     ];
 
     const csv = rows.map(row =>
-      row.map(value =>
-        '"' + String(value ?? "").replace(/"/g, '""') + '"'
-      ).join(",")
+        row.map(value =>
+            '"' + String(value ?? "").replace(/"/g, '""') + '"'
+        ).join(",")
     ).join("\r\n");
 
     const blob = new Blob(["\uFEFF" + csv], {
-      type: "text/csv;charset=utf-8;"
+        type:"text/csv;charset=utf-8;"
     });
 
     const url = URL.createObjectURL(blob);
@@ -1066,7 +1398,7 @@
     link.remove();
 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+}
 </script>
 
 </body>
