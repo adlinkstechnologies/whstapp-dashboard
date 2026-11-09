@@ -88,8 +88,6 @@ body {
 .failed { background:#fee2e2; color:#991b1b; }
 .delivered { background:#dbeafe; color:#1d4ed8; }
 .read { background:#ede9fe; color:#6d28d9; }
-.pending { background:#fef3c7; color:#92400e; }
-.unknown { background:#e2e8f0; color:#475569; }
 .chart-container {
     position: relative;
     height: 270px;
@@ -308,7 +306,6 @@ pre {
                 <option value="delivered">Delivered</option>
                 <option value="read">Read</option>
                 <option value="failed">Failed</option>
-                <option value="pending">Pending / Unknown</option>
             </select>
         </div>
     </div>
@@ -857,7 +854,7 @@ function readFile(file) {
                 }
 
                 if (!record.deliveryStatus) {
-                    record.deliveryStatus = "Pending / Unknown";
+                    record.deliveryStatus = "Not available";
                 }
 
                 return record;
@@ -907,10 +904,7 @@ function getCounts(records) {
         apiFailed: records.filter(r => r.apiResult === "API Failed").length,
         delivered: records.filter(r => r.deliveryStatus === "Delivered").length,
         read: records.filter(r => r.deliveryStatus === "Read").length,
-        failed: records.filter(r => r.deliveryStatus === "Failed").length,
-        pending: records.filter(r =>
-            ["Sent", "Pending / Unknown"].includes(r.deliveryStatus)
-        ).length
+        failed: records.filter(r => r.deliveryStatus === "Failed").length
     };
 }
 
@@ -964,7 +958,6 @@ function buildTemplateSummary(records) {
                 delivered:0,
                 read:0,
                 failed:0,
-                pending:0,
                 apiFailed:0
             };
         }
@@ -1038,10 +1031,10 @@ function renderCharts() {
     createChart("statusChart", {
         type:"doughnut",
         data:{
-            labels:["Delivered", "Read", "Failed", "Pending / Unknown"],
+            labels:["Delivered", "Read", "Failed"],
             datasets:[{
-                data:[c.delivered, c.read, c.failed, c.pending],
-                backgroundColor:["#2563eb", "#8b5cf6", "#dc2626", "#f59e0b"],
+                data:[c.delivered, c.read, c.failed],
+                backgroundColor:["#2563eb", "#8b5cf6", "#dc2626"],
                 borderWidth:0
             }]
         },
@@ -1141,9 +1134,8 @@ function statusClass(status) {
         "Delivered":"delivered",
         "Read":"read",
         "Failed":"failed",
-        "Pending / Unknown":"pending",
-        "Sent":"pending"
-    }[status] || "unknown";
+        "Sent":"accepted"
+    }[status] || "accepted";
 }
 
 function renderRecipientTable() {
@@ -1171,8 +1163,6 @@ function renderRecipientTable() {
         } else if (status === "failed") {
             matchesStatus = r.deliveryStatus === "Failed" ||
                             r.apiResult === "API Failed";
-        } else if (status === "pending") {
-            matchesStatus = ["Pending / Unknown", "Sent"].includes(r.deliveryStatus);
         }
 
         return matchesSearch && matchesTemplate && matchesStatus;
@@ -1249,7 +1239,6 @@ function downloadExcel() {
         {Metric:"Delivered Messages", Value:c.delivered},
         {Metric:"Read Messages", Value:c.read},
         {Metric:"Failed Delivery Messages", Value:c.failed},
-        {Metric:"Pending / Unknown", Value:c.pending},
         {
             Metric:"Unique Recipients",
             Value:new Set(recipientRecords
@@ -1310,12 +1299,7 @@ function downloadExcel() {
         recipientRecords[i].apiResult === "API Failed"
     );
 
-    // 7. Pending records
-    const pendingRows = recipientRows.filter((r, i) =>
-        ["Pending / Unknown", "Sent"].includes(recipientRecords[i].deliveryStatus)
-    );
-
-    // 8. Original history
+    // 7. Original history
     const historyRows = recipientRecords.map(r => ({
         "Application":r.application,
         "Status":r.apiStatus,
@@ -1343,7 +1327,6 @@ function downloadExcel() {
     addSheet(deliveredRows, "Delivered Messages", "No confirmed delivered records");
     addSheet(readRows, "Read Messages", "No confirmed read records");
     addSheet(failedRows, "Failed Messages", "No failed records");
-    addSheet(pendingRows, "Pending Messages", "No pending records");
     addSheet(historyRows, "Original API History");
 
     XLSX.writeFile(wb, "WhatsApp_Broadcast_Complete_Report.xlsx");
