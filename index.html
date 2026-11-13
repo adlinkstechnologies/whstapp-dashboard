@@ -87,7 +87,6 @@ body {
 .accepted { background:#dcfce7; color:#166534; }
 .failed { background:#fee2e2; color:#991b1b; }
 .delivered { background:#dbeafe; color:#1d4ed8; }
-.read { background:#ede9fe; color:#6d28d9; }
 .chart-container {
     position: relative;
     height: 270px;
@@ -206,12 +205,6 @@ pre {
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="stat-card">
-            <h6>Read Messages</h6>
-            <h3 id="readCount">0</h3>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-card">
             <h6>Unique Recipients</h6>
             <h3 id="uniqueRecipients">0</h3>
         </div>
@@ -246,7 +239,6 @@ pre {
                     <th>Total Requests</th>
                     <th>API Accepted</th>
                     <th>Delivered</th>
-                    <th>Read</th>
                     <th>Failed</th>
                     <th>API Success %</th>
                 </tr>
@@ -304,7 +296,6 @@ pre {
                 <option value="all">All statuses</option>
                 <option value="accepted">API Accepted</option>
                 <option value="delivered">Delivered</option>
-                <option value="read">Read</option>
                 <option value="failed">Failed</option>
             </select>
         </div>
@@ -358,9 +349,9 @@ pre {
 <div class="alert alert-info">
     <strong>Important:</strong>
     HTTP 200 indicates that the WhatsApp API accepted a request. It does not
-    confirm delivery. Delivered, Read and Failed counts are populated only
-    when actual WhatsApp delivery status information is present in the uploaded
-    data. Upload webhook status logs alongside API history if necessary.
+    confirm delivery. Delivered and Failed counts are populated only when
+    actual WhatsApp delivery status information is present in the uploaded data.
+    Upload webhook status logs alongside API history if necessary.
 </div>
 
 </div>
@@ -548,7 +539,6 @@ function normalizeDeliveryStatus(value) {
     const s = String(value || "").toLowerCase().trim();
 
     if (s === "delivered") return "Delivered";
-    if (s === "read") return "Read";
     if (s === "failed") return "Failed";
     if (s === "sent") return "Sent";
 
@@ -614,7 +604,6 @@ function getDirectDeliveryStatus(row, response) {
 function statusPriority(status) {
     return {
         "Failed": 5,
-        "Read": 4,
         "Delivered": 3,
         "Sent": 2
     }[status] || 0;
@@ -903,7 +892,6 @@ function getCounts(records) {
         accepted: records.filter(r => r.apiResult === "Accepted by API").length,
         apiFailed: records.filter(r => r.apiResult === "API Failed").length,
         delivered: records.filter(r => r.deliveryStatus === "Delivered").length,
-        read: records.filter(r => r.deliveryStatus === "Read").length,
         failed: records.filter(r => r.deliveryStatus === "Failed").length
     };
 }
@@ -927,7 +915,6 @@ function updateDashboard() {
     $("acceptedCount").textContent = c.accepted;
     $("deliveredCount").textContent = c.delivered;
     $("failedCount").textContent = c.failed;
-    $("readCount").textContent = c.read;
     $("uniqueRecipients").textContent = uniquePhones;
     $("templateCount").textContent = uniqueTemplates;
 
@@ -956,7 +943,6 @@ function buildTemplateSummary(records) {
                 total:0,
                 accepted:0,
                 delivered:0,
-                read:0,
                 failed:0,
                 apiFailed:0
             };
@@ -969,7 +955,6 @@ function buildTemplateSummary(records) {
         if (r.apiResult === "API Failed") s.apiFailed++;
 
         if (r.deliveryStatus === "Delivered") s.delivered++;
-        else if (r.deliveryStatus === "Read") s.read++;
         else if (r.deliveryStatus === "Failed") s.failed++;
         else s.pending++;
     });
@@ -992,7 +977,6 @@ function renderTemplateTable() {
                     <td>${s.total}</td>
                     <td class="text-success fw-bold">${s.accepted}</td>
                     <td>${s.delivered}</td>
-                    <td>${s.read}</td>
                     <td class="text-danger fw-bold">${s.failed}</td>
                     <td>${rate}%</td>
                 </tr>
@@ -1031,10 +1015,10 @@ function renderCharts() {
     createChart("statusChart", {
         type:"doughnut",
         data:{
-            labels:["Delivered", "Read", "Failed"],
+            labels:["Delivered", "Failed"],
             datasets:[{
-                data:[c.delivered, c.read, c.failed],
-                backgroundColor:["#2563eb", "#8b5cf6", "#dc2626"],
+                data:[c.delivered, c.failed],
+                backgroundColor:["#2563eb", "#dc2626"],
                 borderWidth:0
             }]
         },
@@ -1132,7 +1116,6 @@ function statusClass(status) {
     return {
         "Accepted by API":"accepted",
         "Delivered":"delivered",
-        "Read":"read",
         "Failed":"failed",
         "Sent":"accepted"
     }[status] || "accepted";
@@ -1158,8 +1141,6 @@ function renderRecipientTable() {
             matchesStatus = r.apiResult === "Accepted by API";
         } else if (status === "delivered") {
             matchesStatus = r.deliveryStatus === "Delivered";
-        } else if (status === "read") {
-            matchesStatus = r.deliveryStatus === "Read";
         } else if (status === "failed") {
             matchesStatus = r.deliveryStatus === "Failed" ||
                             r.apiResult === "API Failed";
@@ -1237,7 +1218,6 @@ function downloadExcel() {
         {Metric:"Accepted by API", Value:c.accepted},
         {Metric:"API Failed", Value:c.apiFailed},
         {Metric:"Delivered Messages", Value:c.delivered},
-        {Metric:"Read Messages", Value:c.read},
         {Metric:"Failed Delivery Messages", Value:c.failed},
         {
             Metric:"Unique Recipients",
@@ -1262,7 +1242,6 @@ function downloadExcel() {
         "API Accepted":s.accepted,
         "API Failed":s.apiFailed,
         "Delivered":s.delivered,
-        "Read":s.read,
         "Failed Delivery":s.failed,
         "API Success Rate":s.total
             ? (s.accepted / s.total * 100).toFixed(2) + "%"
@@ -1286,11 +1265,6 @@ function downloadExcel() {
     // 4. Separate delivered records
     const deliveredRows = recipientRows.filter((r, i) =>
         recipientRecords[i].deliveryStatus === "Delivered"
-    );
-
-    // 5. Separate read records
-    const readRows = recipientRows.filter((r, i) =>
-        recipientRecords[i].deliveryStatus === "Read"
     );
 
     // 6. Separate failed records (delivery and API failures)
@@ -1325,7 +1299,6 @@ function downloadExcel() {
     addSheet(templateRows, "Template Performance");
     addSheet(recipientRows, "Recipient Details");
     addSheet(deliveredRows, "Delivered Messages", "No confirmed delivered records");
-    addSheet(readRows, "Read Messages", "No confirmed read records");
     addSheet(failedRows, "Failed Messages", "No failed records");
     addSheet(historyRows, "Original API History");
 
